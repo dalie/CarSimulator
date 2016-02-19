@@ -282,6 +282,7 @@
     <TypeScriptCompile Include="Car.ts" />
     <TypeScriptCompile Include="GMath.ts" />
     <TypeScriptCompile Include="InputState.ts" />
+    <TypeScriptCompile Include="Stats.ts" />
     <TypeScriptCompile Include="typings\threejs\three.d.ts" />
     <TypeScriptCompile Include="Vector2.ts" />
   </ItemGroup>

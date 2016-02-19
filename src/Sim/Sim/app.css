@@ -5,3 +5,10 @@
   padding: 0;
   overflow: hidden;
 }
+
+.stats_block {
+  background: rgba(255,255,255,0.85);
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}

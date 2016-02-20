@@ -59,6 +59,8 @@ class CarSim {
         var loader = new THREE.ColladaLoader();
         loader.load('assets/circuit-gilles-villeneuve.dae', (result: any) => {
             this.scene.add(result.scene);
+            this.car.position.set(39, 1450);
+            this.car.heading = THREE.Math.degToRad(90);
         });
 
         this.initScene();
@@ -67,7 +69,7 @@ class CarSim {
         this.camera.position.set(0, 0, this.cameraZ);
         this.camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-        var grid = new THREE.GridHelper(1000, 5);
+        var grid = new THREE.GridHelper(100000, 5);
         grid.rotateX(THREE.Math.degToRad(90));
         grid.setColors(0xaaaaaa, 0xcccccc);
 
@@ -170,10 +172,12 @@ class CarSim {
 
     private setInputs = (key: number, value: number) => {
         switch (key) {
+            case 38:
             case 65:
                 this.inputs.throttle = value;
                 break;
 
+            case 40:
             case 90:
                 this.inputs.brake = value;
                 break;

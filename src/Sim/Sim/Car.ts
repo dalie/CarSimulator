@@ -238,6 +238,8 @@ class Car {
         this.stats.add('slipAngleRear', slipAngleRear);
         this.stats.add('frictionFront', frictionForceFront_cy);
         this.stats.add('frictionRear', frictionForceRear_cy);
+        this.stats.add('position X', this.position.x);
+        this.stats.add('position Y', this.position.y);
     };
 
     /**

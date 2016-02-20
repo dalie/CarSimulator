@@ -6,13 +6,22 @@ var CarSim = (function () {
         this.currentLap = 0;
         this.lastLap = 0;
         this.bestLap = 0;
+        this.isOverFinishLine = false;
+        this.isFinishLineReady = false;
         this.render = function () {
+            _this.stats.clear();
+            _this.stats.add('Current lap', _this.msToTime(_this.currentLap));
+            _this.stats.add('Last lap', _this.msToTime(_this.lastLap));
+            _this.stats.add('Best lap', _this.msToTime(_this.bestLap));
             var now = Date.now();
             var deltaTime = now - _this.previousTime;
-            _this.currentLap = now - _this.lapStart;
+            if (_this.lapStart) {
+                _this.currentLap = now - _this.lapStart;
+            }
             _this.car.setInputs(_this.inputs);
             _this.car.update(deltaTime);
             _this.setCameraPosition();
+            _this.finishLine();
             _this.stats.render();
             _this.renderer.render(_this.scene, _this.camera);
             _this.previousTime = now;
@@ -46,8 +55,8 @@ var CarSim = (function () {
             }
         };
         this.stats = new Stats();
+        this.stats.toggle();
         this.previousTime = Date.now();
-        this.lapStart = Date.now();
         this.inputs = new InputState();
         this.car = new Car({
             heading: 0,
@@ -80,9 +89,15 @@ var CarSim = (function () {
         this.scene = new THREE.Scene();
         var loader = new THREE.ColladaLoader();
         loader.load('assets/circuit-gilles-villeneuve.dae', function (result) {
-            _this.scene.add(result.scene);
+            _this.track = result.scene;
+            _this.scene.add(_this.track);
             _this.car.position.set(39, 1450);
             _this.car.heading = THREE.Math.degToRad(90);
+            _this.finishLineGeometry = new THREE.BoxGeometry(40, 0, 2);
+            var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            _this.finishLineMesh = new THREE.Mesh(_this.finishLineGeometry, material);
+            _this.finishLineMesh.position.set(41, 1627, 0);
+            _this.scene.add(_this.finishLineMesh);
         });
         this.initScene();
         this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight);
@@ -126,6 +141,47 @@ var CarSim = (function () {
         dirLight.shadowCameraFar = 3500;
         dirLight.shadowBias = -0.0001;
     };
+    CarSim.prototype.finishLine = function () {
+        if (this.track) {
+            var originPoint = this.car.bodyMesh.position.clone();
+            var collision = false;
+            for (var vertexIndex = 0; vertexIndex < this.car.bodyGeometry.vertices.length; vertexIndex++) {
+                var localVertex = this.car.bodyGeometry.vertices[vertexIndex].clone();
+                var globalVertex = localVertex.applyMatrix4(this.car.bodyMesh.matrix);
+                var directionVector = globalVertex.sub(this.car.bodyMesh.position);
+                var ray = new THREE.Raycaster(originPoint, directionVector.clone().normalize());
+                var collisionResults = ray.intersectObjects([this.finishLineMesh]);
+                if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) {
+                    collision = true;
+                }
+            }
+            if (!this.isOverFinishLine && collision) {
+                this.isOverFinishLine = true;
+                if (this.isFinishLineReady) {
+                    this.setLap();
+                }
+                this.isFinishLineReady = true;
+            }
+            if (!collision) {
+                this.isOverFinishLine = false;
+            }
+        }
+    };
+    CarSim.prototype.setLap = function () {
+        if (this.lapStart) {
+            this.lastLap = this.currentLap;
+            if (this.currentLap < this.bestLap || !this.bestLap) {
+                this.bestLap = this.currentLap;
+            }
+            this.lapStart = Date.now();
+            this.currentLap = 0;
+            console.log('new lap');
+        }
+        else {
+            this.lapStart = Date.now();
+            console.log(' race start');
+        }
+    };
     CarSim.prototype.msToTime = function (s) {
         var ms = s % 1000;
         s = (s - ms) / 1000;
@@ -133,7 +189,7 @@ var CarSim = (function () {
         s = (s - secs) / 60;
         var mins = s % 60;
         var hrs = (s - mins) / 60;
-        return hrs + ':' + mins + ':' + secs + '.' + ms;
+        return ('0' + mins).slice(-2) + ':' + ('0' + secs).slice(-2) + '.' + ('0' + ms).slice(-3);
     };
     CarSim.prototype.setCameraPosition = function () {
         var angle = this.car.movingDirection;

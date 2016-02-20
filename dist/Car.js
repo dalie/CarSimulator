@@ -49,9 +49,9 @@ var Car = (function () {
         //  Setup car configuration
         this.config = new CarConfig(opts.config);
         this.setConfig();
-        var geometry = new THREE.BoxGeometry(4.5, 3, 2);
+        this.bodyGeometry = new THREE.BoxGeometry(4.5, 3, 2);
         var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        this.bodyMesh = new THREE.Mesh(geometry, material);
+        this.bodyMesh = new THREE.Mesh(this.bodyGeometry, material);
     }
     Car.prototype.setConfig = function (config) {
         if (config) {
@@ -148,16 +148,7 @@ var Car = (function () {
             this.previousPositions.shift();
         }
         //  Display some data
-        this.stats.clear(); // clear this every tick otherwise it'll fill up fast
         this.stats.add('speed', this.speed);
-        this.stats.add('accleration', this.accel_c.x);
-        this.stats.add('yawRate', this.yawRate);
-        this.stats.add('weightFront', axleWeightFront);
-        this.stats.add('weightRear', axleWeightRear);
-        this.stats.add('slipAngleFront', slipAngleFront);
-        this.stats.add('slipAngleRear', slipAngleRear);
-        this.stats.add('frictionFront', frictionForceFront_cy);
-        this.stats.add('frictionRear', frictionForceRear_cy);
         this.stats.add('position X', this.position.x);
         this.stats.add('position Y', this.position.y);
     };

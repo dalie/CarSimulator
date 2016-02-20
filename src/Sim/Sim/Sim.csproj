@@ -293,6 +293,7 @@
     <Content Include="bower_components\three.js\bower.json" />
     <Content Include="bower_components\three.js\package.json" />
     <Content Include="assets\circuit-gilles-villeneuve.dae" />
+    <Content Include="bower.json" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>

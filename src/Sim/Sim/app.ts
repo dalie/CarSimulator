@@ -16,13 +16,20 @@ class CarSim {
     private lastLap: number = 0;
     private bestLap: number = 0;
 
+    private track: THREE.Object3D;
+
+    private finishLineGeometry: THREE.BoxGeometry;
+    private finishLineMesh: THREE.Mesh;
+    private isOverFinishLine: boolean = false;
+    private isFinishLineReady: boolean = false;
+
     public stats: Stats;
 
     constructor() {
         this.stats = new Stats();
+        this.stats.toggle();
 
         this.previousTime = Date.now();
-        this.lapStart = Date.now();
 
         this.inputs = new InputState();
         this.car = new Car({
@@ -58,9 +65,19 @@ class CarSim {
 
         var loader = new THREE.ColladaLoader();
         loader.load('assets/circuit-gilles-villeneuve.dae', (result: any) => {
-            this.scene.add(result.scene);
+            this.track = result.scene;
+            this.scene.add(this.track);
             this.car.position.set(39, 1450);
             this.car.heading = THREE.Math.degToRad(90);
+
+            this.finishLineGeometry = new THREE.BoxGeometry(40, 0, 2);
+
+            var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+
+            this.finishLineMesh = new THREE.Mesh(this.finishLineGeometry, material);
+
+            this.finishLineMesh.position.set(41, 1627, 0);
+            this.scene.add(this.finishLineMesh);
         });
 
         this.initScene();
@@ -121,16 +138,23 @@ class CarSim {
     }
 
     private render = (): void => {
+        this.stats.clear();
+        this.stats.add('Current lap', this.msToTime(this.currentLap));
+        this.stats.add('Last lap', this.msToTime(this.lastLap));
+        this.stats.add('Best lap', this.msToTime(this.bestLap));
+
         var now = Date.now();
         var deltaTime = now - this.previousTime;
 
-        this.currentLap = now - this.lapStart;
+        if (this.lapStart) {
+            this.currentLap = now - this.lapStart;
+        }
 
         this.car.setInputs(this.inputs);
         this.car.update(deltaTime);
 
         this.setCameraPosition();
-
+        this.finishLine();
         this.stats.render();
         this.renderer.render(this.scene, this.camera);
 
@@ -139,7 +163,56 @@ class CarSim {
         requestAnimationFrame(this.render);
     };
 
-    private msToTime(s): string {
+    private finishLine(): void {
+        if (this.track) {
+            var originPoint = this.car.bodyMesh.position.clone();
+            var collision = false;
+            for (var vertexIndex = 0; vertexIndex < this.car.bodyGeometry.vertices.length; vertexIndex++) {
+                var localVertex = this.car.bodyGeometry.vertices[vertexIndex].clone();
+                var globalVertex = localVertex.applyMatrix4(this.car.bodyMesh.matrix);
+                var directionVector = globalVertex.sub(this.car.bodyMesh.position);
+
+                var ray = new THREE.Raycaster(originPoint, directionVector.clone().normalize());
+                var collisionResults = ray.intersectObjects([this.finishLineMesh]);
+                if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) {
+                    collision = true;
+                }
+            }
+
+            if (!this.isOverFinishLine && collision) {
+                this.isOverFinishLine = true
+                if (this.isFinishLineReady) {
+                    this.setLap();
+                }
+
+                this.isFinishLineReady = true;
+            }
+
+            if (!collision) {
+                this.isOverFinishLine = false;
+            }
+        }
+    }
+
+    private setLap() {
+        if (this.lapStart) {
+            this.lastLap = this.currentLap;
+
+            if (this.currentLap < this.bestLap || !this.bestLap) {
+                this.bestLap = this.currentLap;
+            }
+
+            this.lapStart = Date.now();
+            this.currentLap = 0;
+
+            console.log('new lap');
+        } else {
+            this.lapStart = Date.now();
+            console.log(' race start');
+        }
+    }
+
+    private msToTime(s: number): string {
         var ms = s % 1000;
         s = (s - ms) / 1000;
         var secs = s % 60;
@@ -147,7 +220,7 @@ class CarSim {
         var mins = s % 60;
         var hrs = (s - mins) / 60;
 
-        return hrs + ':' + mins + ':' + secs + '.' + ms;
+        return ('0' + mins).slice(-2) + ':' + ('0' + secs).slice(-2) + '.' + ('0' + ms).slice(-3);
     }
 
     private setCameraPosition(): void {

@@ -48,6 +48,7 @@ class CarSim {
         });
 
         this.scene = new THREE.Scene();
+
         var loader = new THREE.ColladaLoader();
         loader.load('assets/circuit-gilles-villeneuve.dae', (result: any) => {
             this.scene.add(result.scene);
@@ -122,8 +123,9 @@ class CarSim {
         this.car.setInputs(this.inputs);
         this.car.update(deltaTime);
 
-        this.cameraZ = 50 + this.car.speed * 0.2;
-        this.camera.position.set(this.car.position.x, this.car.position.y, this.cameraZ);
+        this.setCameraPosition();
+
+        // this.camera.setRotationFromAxisAngle(new THREE.Vector3(0, 0, 1), this.car.movingDirection);
         this.stats.render();
         this.renderer.render(this.scene, this.camera);
 
@@ -131,6 +133,18 @@ class CarSim {
 
         requestAnimationFrame(this.render);
     };
+
+    private setCameraPosition(): void {
+        var angle = this.car.movingDirection;
+        var offset = this.car.speed * 0.2;
+        this.cameraZ = 50 + offset;
+
+        offset = offset / 2;
+        var x = Math.cos(angle) * offset;
+        var y = Math.sin(angle) * offset;
+
+        this.camera.position.set(this.car.bodyMesh.position.x - x, this.car.bodyMesh.position.y - y, this.cameraZ);
+    }
 
     private onKeyDown = (event: KeyboardEvent) => {
         this.setInputs(event.keyCode, 1);

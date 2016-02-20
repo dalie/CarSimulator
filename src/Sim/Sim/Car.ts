@@ -41,6 +41,7 @@ class Car {
     public heading: number;  // angle car is pointed at (radians)
     public inertia: number; // will be = mass
     public inputs: InputState;
+    public previousPositions: THREE.Vector2[] = [];
     public position: THREE.Vector2;  // metres in world coords
     public safeSteer: boolean;
     public smoothSteer: boolean;
@@ -53,11 +54,13 @@ class Car {
     public velocity_c: THREE.Vector2;  // m/s in local car coords (x is forward y is sideways)
     public wheelBase: number;
     public yawRate: number;   // angular velocity in radians
+    public movingDirection: number; // direction the car is moving in radians
 
     constructor(opts: ICarOptions) {
         //  Car state variables
         this.heading = opts.heading;  // angle car is pointed at (radians)
         this.position = new THREE.Vector2(opts.x, opts.y);  // metres in world coords
+        this.previousPositions.push(new THREE.Vector2(this.position.x, this.position.y));
         this.velocity = new THREE.Vector2();  // m/s in world coords
         this.velocity_c = new THREE.Vector2();  // m/s in local car coords (x is forward y is sideways)
         this.accel = new THREE.Vector2();  // acceleration in world coords
@@ -213,6 +216,16 @@ class Car {
         //  finally we can update position
         this.position.x += this.velocity.x * dt;
         this.position.y += this.velocity.y * dt;
+
+        var deltaPos = this.previousPositions[0].sub(this.position);
+
+        this.movingDirection = Math.atan2(deltaPos.y, deltaPos.x);
+
+        this.previousPositions.push(new THREE.Vector2(this.position.x, this.position.y));
+
+        if (this.previousPositions.length > 30) {
+            this.previousPositions.shift();
+        }
 
         //  Display some data
         this.stats.clear();  // clear this every tick otherwise it'll fill up fast

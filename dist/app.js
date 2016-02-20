@@ -26,9 +26,11 @@ var CarSim = (function () {
         };
         this.setInputs = function (key, value) {
             switch (key) {
+                case 38:
                 case 65:
                     _this.inputs.throttle = value;
                     break;
+                case 40:
                 case 90:
                     _this.inputs.brake = value;
                     break;
@@ -79,12 +81,14 @@ var CarSim = (function () {
         var loader = new THREE.ColladaLoader();
         loader.load('assets/circuit-gilles-villeneuve.dae', function (result) {
             _this.scene.add(result.scene);
+            _this.car.position.set(39, 1450);
+            _this.car.heading = THREE.Math.degToRad(90);
         });
         this.initScene();
         this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight);
         this.camera.position.set(0, 0, this.cameraZ);
         this.camera.lookAt(new THREE.Vector3(0, 0, 0));
-        var grid = new THREE.GridHelper(1000, 5);
+        var grid = new THREE.GridHelper(100000, 5);
         grid.rotateX(THREE.Math.degToRad(90));
         grid.setColors(0xaaaaaa, 0xcccccc);
         this.scene.add(grid);

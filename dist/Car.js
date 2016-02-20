@@ -148,7 +148,7 @@ var Car = (function () {
             this.previousPositions.shift();
         }
         //  Display some data
-        this.stats.clear();
+        this.stats.clear(); // clear this every tick otherwise it'll fill up fast
         this.stats.add('speed', this.speed);
         this.stats.add('accleration', this.accel_c.x);
         this.stats.add('yawRate', this.yawRate);
@@ -158,6 +158,8 @@ var Car = (function () {
         this.stats.add('slipAngleRear', slipAngleRear);
         this.stats.add('frictionFront', frictionForceFront_cy);
         this.stats.add('frictionRear', frictionForceRear_cy);
+        this.stats.add('position X', this.position.x);
+        this.stats.add('position Y', this.position.y);
     };
     ;
     /**

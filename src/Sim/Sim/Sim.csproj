@@ -283,6 +283,7 @@
     <TypeScriptCompile Include="GMath.ts" />
     <TypeScriptCompile Include="InputState.ts" />
     <TypeScriptCompile Include="Stats.ts" />
+    <TypeScriptCompile Include="typings\CarSimulator.d.ts" />
     <TypeScriptCompile Include="typings\threejs\three.d.ts" />
     <TypeScriptCompile Include="Vector2.ts" />
   </ItemGroup>
@@ -290,6 +291,7 @@
     <Content Include="bower_components\three.js\.bower.json" />
     <Content Include="bower_components\three.js\bower.json" />
     <Content Include="bower_components\three.js\package.json" />
+    <Content Include="assets\circuit-gilles-villeneuve.dae" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>

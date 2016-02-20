@@ -44,6 +44,7 @@ class Car {
     public position: THREE.Vector2;  // metres in world coords
     public safeSteer: boolean;
     public smoothSteer: boolean;
+    public speed: number;
     public stats: any;
     public steer: number;	// amount of steering input (-1.0..1.0)
     public steerAngle: number;
@@ -65,6 +66,7 @@ class Car {
         this.yawRate = 0.0;   // angular velocity in radians
         this.steer = 0.0;	// amount of steering input (-1.0..1.0)
         this.steerAngle = 0.0;  // actual front wheel steer angle (-maxSteer..maxSteer)
+        this.speed = 0;
 
         //  State of inputs
         this.inputs = new InputState();
@@ -87,8 +89,8 @@ class Car {
         this.config = new CarConfig(opts.config);
         this.setConfig();
 
-        var geometry = new THREE.BoxGeometry(20, 20, 20);
-        var material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+        var geometry = new THREE.BoxGeometry(4.5, 3, 2);
+        var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 
         this.bodyMesh = new THREE.Mesh(geometry, material);
     }
@@ -141,6 +143,7 @@ class Car {
         // Calculate slip angles for front and rear wheels (a.k.a. alpha)
         var slipAngleFront = Math.atan2(this.velocity_c.y + yawSpeedFront, Math.abs(this.velocity_c.x)) -
             GMath.sign(this.velocity_c.x) * this.steerAngle;
+
         var slipAngleRear = Math.atan2(this.velocity_c.y + yawSpeedRear, Math.abs(this.velocity_c.x));
 
         var tireGripFront = cfg.tireGrip;
@@ -205,13 +208,15 @@ class Car {
         this.yawRate += angularAccel * dt;
         this.heading += this.yawRate * dt;
 
+        this.speed = this.velocity_c.x * 3600 / 1000; // km/h
+
         //  finally we can update position
         this.position.x += this.velocity.x * dt;
         this.position.y += this.velocity.y * dt;
 
         //  Display some data
         this.stats.clear();  // clear this every tick otherwise it'll fill up fast
-        this.stats.add('speed', this.velocity_c.x * 3600 / 1000);  // km/h
+        this.stats.add('speed', this.speed);
         this.stats.add('accleration', this.accel_c.x);
         this.stats.add('yawRate', this.yawRate);
         this.stats.add('weightFront', axleWeightFront);

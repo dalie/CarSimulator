@@ -2,6 +2,7 @@
 
 class CarSim {
     private camera: THREE.PerspectiveCamera;
+    private cameraZ: number = 50;
     private renderer: THREE.WebGLRenderer;
     private scene: THREE.Scene;
 
@@ -20,35 +21,42 @@ class CarSim {
         this.car = new Car({
             heading: 0,
             safeSteer: false,
-            smoothSteer: true,
+            smoothSteer: false,
             stats: this.stats,
             x: 0,
             y: 0,
             config: {
-                mass: 1370,
-                halfWidth: 0.925,
-                cgToFront: 2.5,
+                mass: 1400,
+                halfWidth: 0.8,
+                cgToFront: 2,
                 cgToRear: 2,
-                cgToFrontAxle: 1.75,
+                cgToFrontAxle: 1.25,
                 cgToRearAxle: 1.25,
-                cgHeight: 0.5,
-                wheelRadius: 0.56,
-                wheelWidth: 0.265,
-                tireGrip: 2,
-                lockGrip: 1.2,
-                engineForce: 10000,
-                brakeForce: 25000,
-                ebrakeForce: 25000,
+                cgHeight: 0.55,
+                wheelRadius: 0.3,
+                wheelWidth: 0.2,
+                tireGrip: 15,
+                lockGrip: 10,
+                engineForce: 18000,
+                brakeForce: 20000,
+                ebrakeForce: 4500,
                 weightTransfer: 0.2,
-                maxSteer: 0.75,
-                cornerStiffnessFront: 8,
-                cornerStiffnessRear: 5
+                maxSteer: 0.6,
+                cornerStiffnessFront: 10,
+                cornerStiffnessRear: 40
             }
         });
 
         this.scene = new THREE.Scene();
+        var loader = new THREE.ColladaLoader();
+        loader.load('assets/circuit-gilles-villeneuve.dae', (result: any) => {
+            this.scene.add(result.scene);
+        });
+
+        this.initScene();
+
         this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight);
-        this.camera.position.set(0, 0, 50);
+        this.camera.position.set(0, 0, this.cameraZ);
         this.camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         var grid = new THREE.GridHelper(1000, 5);
@@ -58,7 +66,8 @@ class CarSim {
         this.scene.add(grid);
         this.scene.add(this.car.bodyMesh);
         this.renderer = new THREE.WebGLRenderer({
-            alpha: true
+            alpha: true,
+            antialias: true
         });
 
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -71,12 +80,50 @@ class CarSim {
         this.render();
     }
 
+    private initScene(): void {
+        var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
+        hemiLight.color.setHSL(0.6, 1, 0.6);
+        hemiLight.groundColor.setHSL(0.095, 1, 0.75);
+        hemiLight.position.set(0, 500, 0);
+        this.scene.add(hemiLight);
+
+        //
+
+        var dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.color.setHSL(0.1, 1, 0.95);
+        dirLight.position.set(-1, 1.75, 1);
+        dirLight.position.multiplyScalar(50);
+        dirLight.rotateX(THREE.Math.degToRad(90));
+        this.scene.add(dirLight);
+
+        dirLight.castShadow = true;
+
+        dirLight.shadowMapWidth = 2048;
+        dirLight.shadowMapHeight = 2048;
+
+        var d = 50;
+
+        dirLight.shadowCameraLeft = -d;
+        dirLight.shadowCameraRight = d;
+        dirLight.shadowCameraTop = d;
+        dirLight.shadowCameraBottom = -d;
+
+        dirLight.shadowCameraFar = 3500;
+        dirLight.shadowBias = -0.0001;
+        // dirLight.shadowCameraVisible = true;
+
+        // GROUND
+    }
+
     private render = (): void => {
         var now = Date.now();
         var deltaTime = now - this.previousTime;
 
         this.car.setInputs(this.inputs);
         this.car.update(deltaTime);
+
+        this.cameraZ = 50 + this.car.speed * 0.2;
+        this.camera.position.set(this.car.position.x, this.car.position.y, this.cameraZ);
         this.stats.render();
         this.renderer.render(this.scene, this.camera);
 

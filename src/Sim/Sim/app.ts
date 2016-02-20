@@ -11,12 +11,19 @@ class CarSim {
 
     private previousTime: number;
 
+    private lapStart: number;
+    private currentLap: number = 0;
+    private lastLap: number = 0;
+    private bestLap: number = 0;
+
     public stats: Stats;
 
     constructor() {
         this.stats = new Stats();
 
         this.previousTime = Date.now();
+        this.lapStart = Date.now();
+
         this.inputs = new InputState();
         this.car = new Car({
             heading: 0,
@@ -88,8 +95,6 @@ class CarSim {
         hemiLight.position.set(0, 500, 0);
         this.scene.add(hemiLight);
 
-        //
-
         var dirLight = new THREE.DirectionalLight(0xffffff, 1);
         dirLight.color.setHSL(0.1, 1, 0.95);
         dirLight.position.set(-1, 1.75, 1);
@@ -111,21 +116,19 @@ class CarSim {
 
         dirLight.shadowCameraFar = 3500;
         dirLight.shadowBias = -0.0001;
-        // dirLight.shadowCameraVisible = true;
-
-        // GROUND
     }
 
     private render = (): void => {
         var now = Date.now();
         var deltaTime = now - this.previousTime;
 
+        this.currentLap = now - this.lapStart;
+
         this.car.setInputs(this.inputs);
         this.car.update(deltaTime);
 
         this.setCameraPosition();
 
-        // this.camera.setRotationFromAxisAngle(new THREE.Vector3(0, 0, 1), this.car.movingDirection);
         this.stats.render();
         this.renderer.render(this.scene, this.camera);
 
@@ -133,6 +136,17 @@ class CarSim {
 
         requestAnimationFrame(this.render);
     };
+
+    private msToTime(s): string {
+        var ms = s % 1000;
+        s = (s - ms) / 1000;
+        var secs = s % 60;
+        s = (s - secs) / 60;
+        var mins = s % 60;
+        var hrs = (s - mins) / 60;
+
+        return hrs + ':' + mins + ':' + secs + '.' + ms;
+    }
 
     private setCameraPosition(): void {
         var angle = this.car.movingDirection;

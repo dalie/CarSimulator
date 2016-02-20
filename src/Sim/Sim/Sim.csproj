@@ -274,6 +274,7 @@
     <Content Include="bower_components\three.js\examples\js\utils\ShadowMapViewer.js" />
     <Content Include="bower_components\three.js\examples\js\utils\UVsDebug.js" />
     <Content Include="bower_components\three.js\examples\js\WaterShader.js" />
+    <Content Include="gulpfile.js" />
     <Content Include="index.html" />
     <Content Include="web.config" />
   </ItemGroup>

@@ -1,3 +1,3 @@
 #  CarSimulator
 
-[http://dalie.github.io/CarSimulator/carsimulator.html](http://dalie.github.io/CarSimulator/carsimulator.html)
+[Play the game!](http://dalie.github.io/CarSimulator/dist/index.html)

@@ -1,0 +1,24 @@
+{
+  "name": "CarSimulator",
+  "homepage": "https://github.com/dalie/CarSimulator",
+  "authors": [
+    "Dominic Alie <dominic@georadix.com>"
+  ],
+  "description": "",
+  "main": "",
+  "moduleType": [
+    "amd"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "three.js": "threejs#*"
+  }
+}

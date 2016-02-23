@@ -12,7 +12,7 @@ class CarSim {
     private previousTime: number;
 
     private lapStart: number;
-    private currentLap: number = 0;
+    private currentLap: number = -1;
     private lastLap: number = 0;
     private bestLap: number = 0;
 
@@ -21,7 +21,8 @@ class CarSim {
     private finishLineGeometry: THREE.BoxGeometry;
     private finishLineMesh: THREE.Mesh;
     private isOverFinishLine: boolean = false;
-    private isFinishLineReady: boolean = false;
+    private trackHitMeshes: THREE.Mesh[] = [];
+    private isOffTrack: boolean = false;
 
     public stats: Stats;
 
@@ -70,13 +71,20 @@ class CarSim {
             this.car.position.set(39, 1450);
             this.car.heading = THREE.Math.degToRad(90);
 
-            this.finishLineGeometry = new THREE.BoxGeometry(40, 0, 2);
+            this.finishLineGeometry = new THREE.BoxGeometry(40, 5, 1);
 
             var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 
             this.finishLineMesh = new THREE.Mesh(this.finishLineGeometry, material);
 
-            this.finishLineMesh.position.set(41, 1627, 0);
+            this.finishLineMesh.position.set(43, 1629, 0);
+
+            this.track.traverse((child: any) => {
+                if (child instanceof THREE.Mesh) {
+                    this.trackHitMeshes.push(child);
+                }
+            });
+
             this.scene.add(this.finishLineMesh);
         });
 
@@ -154,7 +162,12 @@ class CarSim {
         this.car.update(deltaTime);
 
         this.setCameraPosition();
-        this.finishLine();
+
+        if (this.track) {
+            this.finishLine();
+            this.checkOffTrack();
+        }
+
         this.stats.render();
         this.renderer.render(this.scene, this.camera);
 
@@ -164,33 +177,64 @@ class CarSim {
     };
 
     private finishLine(): void {
-        if (this.track) {
-            var originPoint = this.car.bodyMesh.position.clone();
-            var collision = false;
-            for (var vertexIndex = 0; vertexIndex < this.car.bodyGeometry.vertices.length; vertexIndex++) {
-                var localVertex = this.car.bodyGeometry.vertices[vertexIndex].clone();
-                var globalVertex = localVertex.applyMatrix4(this.car.bodyMesh.matrix);
-                var directionVector = globalVertex.sub(this.car.bodyMesh.position);
+        var collision = false;
 
-                var ray = new THREE.Raycaster(originPoint, directionVector.clone().normalize());
-                var collisionResults = ray.intersectObjects([this.finishLineMesh]);
-                if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) {
-                    collision = true;
+        var originPoint = this.car.bodyMesh.position.clone();
+        originPoint.add(new THREE.Vector3(0, 0, 3));
+        var directionVector = new THREE.Vector3(0, 0, -1).normalize();
+        var ray = new THREE.Raycaster(originPoint, directionVector);
+        var collisionResults = ray.intersectObjects([this.finishLineMesh]);
+
+        if (collisionResults.length > 0) {
+            collision = true;
+        }
+
+        if (!this.isOverFinishLine && collision) {
+            this.isOverFinishLine = true
+
+            this.setLap();
+        }
+
+        if (!collision) {
+            this.isOverFinishLine = false;
+        }
+    }
+
+    private checkOffTrack(): void {
+        if (this.trackHitMeshes) {
+            var wheelPositions: THREE.Vector3[] = [];
+            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(2.25, -1.5, 3)));
+            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(2.25, 1.5, 3)));
+            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(-2.25, -1.5, 3)));
+            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(-2.25, 1.5, 3)));
+
+            var directionVector = new THREE.Vector3(0, 0, -1).normalize();
+
+            var wheelsOffCount = 0;
+
+            wheelPositions.forEach((position) => {
+                var ray = new THREE.Raycaster(position, directionVector);
+                var collisionResults = ray.intersectObjects(this.trackHitMeshes);
+                if (collisionResults.length == 0) {
+                    wheelsOffCount++;
                 }
-            }
+            });
 
-            if (!this.isOverFinishLine && collision) {
-                this.isOverFinishLine = true
-                if (this.isFinishLineReady) {
-                    this.setLap();
+            if (wheelsOffCount > 2) {
+                if (!this.isOffTrack) {
+                    this.isOffTrack = true;
+                    this.addPenalty();
                 }
-
-                this.isFinishLineReady = true;
+            } else {
+                this.isOffTrack = false;
             }
+        }
+    }
 
-            if (!collision) {
-                this.isOverFinishLine = false;
-            }
+    private addPenalty(): void {
+        if (this.currentLap > -1) {
+            this.lapStart -= 2000;
+            console.log('add 2 seconds');
         }
     }
 

@@ -203,10 +203,13 @@ class CarSim {
     private checkOffTrack(): void {
         if (this.trackHitMeshes) {
             var wheelPositions: THREE.Vector3[] = [];
-            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(2.25, -1.5, 3)));
-            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(2.25, 1.5, 3)));
-            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(-2.25, -1.5, 3)));
-            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(-2.25, 1.5, 3)));
+
+            var x = this.car.lenght / 2;
+            var y = this.car.width / 2;
+            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(x, -y, 3)));
+            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(x, y, 3)));
+            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(-x, -y, 3)));
+            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(-x, y, 3)));
 
             var directionVector = new THREE.Vector3(0, 0, -1).normalize();
 

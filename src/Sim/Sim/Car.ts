@@ -56,6 +56,9 @@ class Car {
     public yawRate: number;   // angular velocity in radians
     public movingDirection: number; // direction the car is moving in radians
     public bodyGeometry: THREE.BoxGeometry;
+    public width = 2;
+    public lenght = 4.5;
+    public height = 1.5;
 
     constructor(opts: ICarOptions) {
         //  Car state variables
@@ -93,7 +96,7 @@ class Car {
         this.config = new CarConfig(opts.config);
         this.setConfig();
 
-        this.bodyGeometry = new THREE.BoxGeometry(4.5, 3, 2);
+        this.bodyGeometry = new THREE.BoxGeometry(this.lenght, this.width, this.height);
 
         var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 

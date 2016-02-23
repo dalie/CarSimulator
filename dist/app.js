@@ -3,11 +3,12 @@ var CarSim = (function () {
     function CarSim() {
         var _this = this;
         this.cameraZ = 50;
-        this.currentLap = 0;
+        this.currentLap = -1;
         this.lastLap = 0;
         this.bestLap = 0;
         this.isOverFinishLine = false;
-        this.isFinishLineReady = false;
+        this.trackHitMeshes = [];
+        this.isOffTrack = false;
         this.render = function () {
             _this.stats.clear();
             _this.stats.add('Current lap', _this.msToTime(_this.currentLap));
@@ -21,7 +22,10 @@ var CarSim = (function () {
             _this.car.setInputs(_this.inputs);
             _this.car.update(deltaTime);
             _this.setCameraPosition();
-            _this.finishLine();
+            if (_this.track) {
+                _this.finishLine();
+                _this.checkOffTrack();
+            }
             _this.stats.render();
             _this.renderer.render(_this.scene, _this.camera);
             _this.previousTime = now;
@@ -93,10 +97,15 @@ var CarSim = (function () {
             _this.scene.add(_this.track);
             _this.car.position.set(39, 1450);
             _this.car.heading = THREE.Math.degToRad(90);
-            _this.finishLineGeometry = new THREE.BoxGeometry(40, 0, 2);
+            _this.finishLineGeometry = new THREE.BoxGeometry(40, 5, 1);
             var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
             _this.finishLineMesh = new THREE.Mesh(_this.finishLineGeometry, material);
-            _this.finishLineMesh.position.set(41, 1627, 0);
+            _this.finishLineMesh.position.set(43, 1629, 0);
+            _this.track.traverse(function (child) {
+                if (child instanceof THREE.Mesh) {
+                    _this.trackHitMeshes.push(child);
+                }
+            });
             _this.scene.add(_this.finishLineMesh);
         });
         this.initScene();
@@ -142,29 +151,55 @@ var CarSim = (function () {
         dirLight.shadowBias = -0.0001;
     };
     CarSim.prototype.finishLine = function () {
-        if (this.track) {
-            var originPoint = this.car.bodyMesh.position.clone();
-            var collision = false;
-            for (var vertexIndex = 0; vertexIndex < this.car.bodyGeometry.vertices.length; vertexIndex++) {
-                var localVertex = this.car.bodyGeometry.vertices[vertexIndex].clone();
-                var globalVertex = localVertex.applyMatrix4(this.car.bodyMesh.matrix);
-                var directionVector = globalVertex.sub(this.car.bodyMesh.position);
-                var ray = new THREE.Raycaster(originPoint, directionVector.clone().normalize());
-                var collisionResults = ray.intersectObjects([this.finishLineMesh]);
-                if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) {
-                    collision = true;
+        var collision = false;
+        var originPoint = this.car.bodyMesh.position.clone();
+        originPoint.add(new THREE.Vector3(0, 0, 3));
+        var directionVector = new THREE.Vector3(0, 0, -1).normalize();
+        var ray = new THREE.Raycaster(originPoint, directionVector);
+        var collisionResults = ray.intersectObjects([this.finishLineMesh]);
+        if (collisionResults.length > 0) {
+            collision = true;
+        }
+        if (!this.isOverFinishLine && collision) {
+            this.isOverFinishLine = true;
+            this.setLap();
+        }
+        if (!collision) {
+            this.isOverFinishLine = false;
+        }
+    };
+    CarSim.prototype.checkOffTrack = function () {
+        var _this = this;
+        if (this.trackHitMeshes) {
+            var wheelPositions = [];
+            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(2.25, -1.5, 3)));
+            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(2.25, 1.5, 3)));
+            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(-2.25, -1.5, 3)));
+            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(-2.25, 1.5, 3)));
+            var directionVector = new THREE.Vector3(0, 0, -1).normalize();
+            var wheelsOffCount = 0;
+            wheelPositions.forEach(function (position) {
+                var ray = new THREE.Raycaster(position, directionVector);
+                var collisionResults = ray.intersectObjects(_this.trackHitMeshes);
+                if (collisionResults.length == 0) {
+                    wheelsOffCount++;
+                }
+            });
+            if (wheelsOffCount > 2) {
+                if (!this.isOffTrack) {
+                    this.isOffTrack = true;
+                    this.addPenalty();
                 }
             }
-            if (!this.isOverFinishLine && collision) {
-                this.isOverFinishLine = true;
-                if (this.isFinishLineReady) {
-                    this.setLap();
-                }
-                this.isFinishLineReady = true;
+            else {
+                this.isOffTrack = false;
             }
-            if (!collision) {
-                this.isOverFinishLine = false;
-            }
+        }
+    };
+    CarSim.prototype.addPenalty = function () {
+        if (this.currentLap > -1) {
+            this.lapStart -= 2000;
+            console.log('add 2 seconds');
         }
     };
     CarSim.prototype.setLap = function () {

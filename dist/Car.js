@@ -20,6 +20,9 @@
 var Car = (function () {
     function Car(opts) {
         this.previousPositions = [];
+        this.width = 2;
+        this.lenght = 4.5;
+        this.height = 1.5;
         //  Car state variables
         this.heading = opts.heading; // angle car is pointed at (radians)
         this.position = new THREE.Vector2(opts.x, opts.y); // metres in world coords
@@ -49,7 +52,7 @@ var Car = (function () {
         //  Setup car configuration
         this.config = new CarConfig(opts.config);
         this.setConfig();
-        this.bodyGeometry = new THREE.BoxGeometry(4.5, 3, 2);
+        this.bodyGeometry = new THREE.BoxGeometry(this.lenght, this.width, this.height);
         var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
         this.bodyMesh = new THREE.Mesh(this.bodyGeometry, material);
     }

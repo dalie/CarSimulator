@@ -19,11 +19,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="app.css" />
-    <Content Include="assets\cars-collection-in-top-view_23-2147514134.png" />
-    <Content Include="assets\grid.png" />
     <Content Include="assets\logo.png" />
     <Content Include="index.html" />
     <Content Include="libs\ColladaLoader.js" />
+    <Content Include="libs\jquery-2.2.1.min.js" />
     <Content Include="libs\three.min.js" />
     <Content Include="web.config" />
   </ItemGroup>
@@ -34,11 +33,15 @@
     <TypeScriptCompile Include="InputState.ts" />
     <TypeScriptCompile Include="Stats.ts" />
     <TypeScriptCompile Include="typings\CarSimulator.d.ts" />
+    <TypeScriptCompile Include="typings\jquery\jquery.d.ts" />
     <TypeScriptCompile Include="typings\threejs\three.d.ts" />
-    <TypeScriptCompile Include="Vector2.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="assets\circuit-gilles-villeneuve.dae" />
+    <Content Include="assets\cars\f1\f1.dae" />
+    <Content Include=".gitignore" />
+    <Content Include="assets\cars\f1\f1.json" />
+    <Content Include="assets\cars\drifter\drifter.json" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>

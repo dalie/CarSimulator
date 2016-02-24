@@ -1,0 +1,23 @@
+﻿{
+  "id": "f1",
+  "name": "Formula 1",
+  "image": "thumbnail.jpg",
+  "model": "f1/f1.dae",
+  "config": {
+    "mass": 1400,
+    "cgToFront": 2,
+    "cgToRear": 2,
+    "cgToFrontAxle": 1.25,
+    "cgToRearAxle": 1.25,
+    "cgHeight": 0.55,
+    "tireGrip": 15,
+    "lockGrip": 10,
+    "engineForce": 18000,
+    "brakeForce": 20000,
+    "ebrakeForce": 4500,
+    "weightTransfer": 0.2,
+    "maxSteer": 0.6,
+    "cornerStiffnessFront": 10,
+    "cornerStiffnessRear": 40
+  }
+}

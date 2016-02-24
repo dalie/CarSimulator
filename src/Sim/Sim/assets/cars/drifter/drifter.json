@@ -1,0 +1,23 @@
+﻿{
+  "id": "drifter",
+  "name": "Drifter",
+  "image": "thumbnail.jpg",
+  "model": "drifter/drifter.dae",
+  "config": {
+    "mass": 1200,
+    "cgToFront": 2,
+    "cgToRear": 2,
+    "cgToFrontAxle": 1.25,
+    "cgToRearAxle": 1.25,
+    "cgHeight": 0.25,
+    "tireGrip": 18,
+    "lockGrip": 2.7,
+    "engineForce": 22000,
+    "brakeForce": 22000,
+    "ebrakeForce": 4800,
+    "weightTransfer": 0.1,
+    "maxSteer": 0.95,
+    "cornerStiffnessFront": 0.5,
+    "cornerStiffnessRear": 0.5
+  }
+}

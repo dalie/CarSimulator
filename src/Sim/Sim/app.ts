@@ -33,33 +33,10 @@ class CarSim {
         this.previousTime = Date.now();
 
         this.inputs = new InputState();
-        this.car = new Car({
-            heading: 0,
-            safeSteer: false,
-            smoothSteer: false,
-            stats: this.stats,
-            x: 0,
-            y: 0,
-            config: {
-                mass: 1400,
-                halfWidth: 0.8,
-                cgToFront: 2,
-                cgToRear: 2,
-                cgToFrontAxle: 1.25,
-                cgToRearAxle: 1.25,
-                cgHeight: 0.55,
-                wheelRadius: 0.3,
-                wheelWidth: 0.2,
-                tireGrip: 15,
-                lockGrip: 10,
-                engineForce: 18000,
-                brakeForce: 20000,
-                ebrakeForce: 4500,
-                weightTransfer: 0.2,
-                maxSteer: 0.6,
-                cornerStiffnessFront: 10,
-                cornerStiffnessRear: 40
-            }
+        this.car = new Car('assets/cars/drifter/drifter.json', (mesh: THREE.Object3D) => {
+            this.scene.add(mesh);
+            this.car.position.set(39, 1450);
+            this.car.heading = THREE.Math.degToRad(90);
         });
 
         this.scene = new THREE.Scene();
@@ -68,8 +45,6 @@ class CarSim {
         loader.load('assets/circuit-gilles-villeneuve.dae', (result: any) => {
             this.track = result.scene;
             this.scene.add(this.track);
-            this.car.position.set(39, 1450);
-            this.car.heading = THREE.Math.degToRad(90);
 
             this.finishLineGeometry = new THREE.BoxGeometry(40, 5, 1);
 
@@ -99,7 +74,7 @@ class CarSim {
         grid.setColors(0xaaaaaa, 0xcccccc);
 
         this.scene.add(grid);
-        this.scene.add(this.car.bodyMesh);
+
         this.renderer = new THREE.WebGLRenderer({
             alpha: true,
             antialias: true
@@ -158,12 +133,13 @@ class CarSim {
             this.currentLap = now - this.lapStart;
         }
 
-        this.car.setInputs(this.inputs);
-        this.car.update(deltaTime);
+        if (this.car.body) {
+            this.car.setInputs(this.inputs);
+            this.car.update(deltaTime);
+            this.setCameraPosition();
+        }
 
-        this.setCameraPosition();
-
-        if (this.track) {
+        if (this.track && this.car.body) {
             this.finishLine();
             this.checkOffTrack();
         }
@@ -179,7 +155,7 @@ class CarSim {
     private finishLine(): void {
         var collision = false;
 
-        var originPoint = this.car.bodyMesh.position.clone();
+        var originPoint = this.car.body.position.clone();
         originPoint.add(new THREE.Vector3(0, 0, 3));
         var directionVector = new THREE.Vector3(0, 0, -1).normalize();
         var ray = new THREE.Raycaster(originPoint, directionVector);
@@ -190,7 +166,7 @@ class CarSim {
         }
 
         if (!this.isOverFinishLine && collision) {
-            this.isOverFinishLine = true
+            this.isOverFinishLine = true;
 
             this.setLap();
         }
@@ -204,21 +180,21 @@ class CarSim {
         if (this.trackHitMeshes) {
             var wheelPositions: THREE.Vector3[] = [];
 
-            var x = this.car.lenght / 2;
-            var y = this.car.width / 2;
-            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(x, -y, 3)));
-            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(x, y, 3)));
-            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(-x, -y, 3)));
-            wheelPositions.push(this.car.bodyMesh.localToWorld(new THREE.Vector3(-x, y, 3)));
+            var x = 4.2 / 2;
+            var y = 2.1 / 2;
+            wheelPositions.push(this.car.body.localToWorld(new THREE.Vector3(x, -y, 3)));
+            wheelPositions.push(this.car.body.localToWorld(new THREE.Vector3(x, y, 3)));
+            wheelPositions.push(this.car.body.localToWorld(new THREE.Vector3(-x, -y, 3)));
+            wheelPositions.push(this.car.body.localToWorld(new THREE.Vector3(-x, y, 3)));
 
             var directionVector = new THREE.Vector3(0, 0, -1).normalize();
 
             var wheelsOffCount = 0;
 
-            wheelPositions.forEach((position) => {
+            wheelPositions.forEach((position: THREE.Vector3) => {
                 var ray = new THREE.Raycaster(position, directionVector);
                 var collisionResults = ray.intersectObjects(this.trackHitMeshes);
-                if (collisionResults.length == 0) {
+                if (collisionResults.length === 0) {
                     wheelsOffCount++;
                 }
             });
@@ -265,7 +241,6 @@ class CarSim {
         var secs = s % 60;
         s = (s - secs) / 60;
         var mins = s % 60;
-        var hrs = (s - mins) / 60;
 
         return ('0' + mins).slice(-2) + ':' + ('0' + secs).slice(-2) + '.' + ('0' + ms).slice(-3);
     }
@@ -279,7 +254,7 @@ class CarSim {
         var x = Math.cos(angle) * offset;
         var y = Math.sin(angle) * offset;
 
-        this.camera.position.set(this.car.bodyMesh.position.x - x, this.car.bodyMesh.position.y - y, this.cameraZ);
+        this.camera.position.set(this.car.body.position.x - x, this.car.body.position.y - y, this.cameraZ);
     }
 
     private onKeyDown = (event: KeyboardEvent) => {

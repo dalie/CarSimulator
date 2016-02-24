@@ -35,7 +35,7 @@ class Car {
     public accel_c: THREE.Vector2;   // accleration in local car coords
     public axleWeightRatioFront: number;
     public axleWeightRatioRear: number;
-    public bodyMesh: THREE.Mesh;
+    public body: THREE.Object3D;
     public brake: number;
     public config: CarConfig;
     public heading: number;  // angle car is pointed at (radians)
@@ -46,7 +46,6 @@ class Car {
     public safeSteer: boolean;
     public smoothSteer: boolean;
     public speed: number;
-    public stats: any;
     public steer: number;	// amount of steering input (-1.0..1.0)
     public steerAngle: number;
     public throttle: number;
@@ -55,52 +54,46 @@ class Car {
     public wheelBase: number;
     public yawRate: number;   // angular velocity in radians
     public movingDirection: number; // direction the car is moving in radians
-    public bodyGeometry: THREE.BoxGeometry;
-    public width = 2;
-    public lenght = 4.5;
-    public height = 1.5;
 
-    constructor(opts: ICarOptions) {
-        //  Car state variables
-        this.heading = opts.heading;  // angle car is pointed at (radians)
-        this.position = new THREE.Vector2(opts.x, opts.y);  // metres in world coords
-        this.previousPositions.push(new THREE.Vector2(this.position.x, this.position.y));
-        this.velocity = new THREE.Vector2();  // m/s in world coords
-        this.velocity_c = new THREE.Vector2();  // m/s in local car coords (x is forward y is sideways)
-        this.accel = new THREE.Vector2();  // acceleration in world coords
-        this.accel_c = new THREE.Vector2();   // accleration in local car coords
-        this.absVel = 0.0;  // absolute velocity m/s
-        this.yawRate = 0.0;   // angular velocity in radians
-        this.steer = 0.0;	// amount of steering input (-1.0..1.0)
-        this.steerAngle = 0.0;  // actual front wheel steer angle (-maxSteer..maxSteer)
-        this.speed = 0;
+    constructor(filePath: string, callback: (mesh: THREE.Object3D) => void) {
+        $.getJSON(filePath, (data: any) => {
+            //  Car state variables
+            this.heading = 0;  // angle car is pointed at (radians)
+            this.position = new THREE.Vector2(0, 0);  // metres in world coords
+            this.previousPositions.push(new THREE.Vector2(this.position.x, this.position.y));
+            this.velocity = new THREE.Vector2();  // m/s in world coords
+            this.velocity_c = new THREE.Vector2();  // m/s in local car coords (x is forward y is sideways)
+            this.accel = new THREE.Vector2();  // acceleration in world coords
+            this.accel_c = new THREE.Vector2();   // accleration in local car coords
+            this.absVel = 0.0;  // absolute velocity m/s
+            this.yawRate = 0.0;   // angular velocity in radians
+            this.steer = 0.0;	// amount of steering input (-1.0..1.0)
+            this.steerAngle = 0.0;  // actual front wheel steer angle (-maxSteer..maxSteer)
+            this.speed = 0;
 
-        //  State of inputs
-        this.inputs = new InputState();
+            //  State of inputs
+            this.inputs = new InputState();
 
-        //  Use input smoothing (on by default)
-        this.smoothSteer = opts.smoothSteer;
-        //  Use safe steering (angle limited by speed)
-        this.safeSteer = (opts.safeSteer === undefined) ? true : !!opts.safeSteer;
+            //  Use input smoothing (on by default)
+            this.smoothSteer = false;
+            //  Use safe steering (angle limited by speed)
+            this.safeSteer = false;
 
-        //  Stats object we can use to ouptut info
-        this.stats = opts.stats;
+            //  Other static values to be computed from config
+            this.inertia = 0.0;  // will be = mass
+            this.wheelBase = 0.0;  // set from axle to CG lengths
+            this.axleWeightRatioFront = 0.0;  // % car weight on the front axle
+            this.axleWeightRatioRear = 0.0;  // % car weight on the rear axle
 
-        //  Other static values to be computed from config
-        this.inertia = 0.0;  // will be = mass
-        this.wheelBase = 0.0;  // set from axle to CG lengths
-        this.axleWeightRatioFront = 0.0;  // % car weight on the front axle
-        this.axleWeightRatioRear = 0.0;  // % car weight on the rear axle
-
-        //  Setup car configuration
-        this.config = new CarConfig(opts.config);
-        this.setConfig();
-
-        this.bodyGeometry = new THREE.BoxGeometry(this.lenght, this.width, this.height);
-
-        var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-
-        this.bodyMesh = new THREE.Mesh(this.bodyGeometry, material);
+            var loader = new THREE.ColladaLoader();
+            loader.load('assets/cars/' + data.model, (result: any) => {
+                this.body = result.scene;
+                //  Setup car configuration
+                this.config = new CarConfig(data.config);
+                this.setConfig();
+                callback(this.body);
+            });
+        });
     }
 
     public setConfig(config?: CarConfig): void {
@@ -231,11 +224,6 @@ class Car {
         if (this.previousPositions.length > 30) {
             this.previousPositions.shift();
         }
-
-        //  Display some data
-        this.stats.add('speed', this.speed);
-        this.stats.add('position X', this.position.x);
-        this.stats.add('position Y', this.position.y);
     };
 
     /**
@@ -302,61 +290,8 @@ class Car {
         //
         this.doPhysics(dt);
 
-        this.bodyMesh.position.set(this.position.x, this.position.y, 0);
-        this.bodyMesh.setRotationFromAxisAngle(new THREE.Vector3(0, 0, 1), this.heading);
-    };
-
-    /**
-     *  @param ctx 2D rendering context (from canvas)
-     */
-    public render(ctx: CanvasRenderingContext2D) {
-        var cfg = this.config;  // shorthand reference
-
-        ctx.save();
-
-        ctx.translate(this.position.x, this.position.y);
-        ctx.rotate(this.heading);
-
-        // Draw car body
-        ctx.beginPath();
-        ctx.rect(-cfg.cgToRear, -cfg.halfWidth, cfg.cgToFront + cfg.cgToRear, cfg.halfWidth * 2.0);
-        ctx.fillStyle = '#1166BB';
-        ctx.fill();
-        ctx.lineWidth = 0.05;  // use thin lines because everything is scaled up 25x
-        ctx.strokeStyle = '#222222';
-        ctx.stroke();
-        ctx.closePath();
-
-        // Draw rear wheels
-        ctx.translate(-cfg.cgToRearAxle, 0);
-        ctx.beginPath();
-        ctx.rect(
-            -cfg.wheelRadius, -cfg.wheelWidth / 2.0,
-            cfg.wheelRadius * 2, cfg.wheelWidth
-            );
-        ctx.fillStyle = '#444444';
-        ctx.fill();
-        ctx.lineWidth = 0.05;
-        ctx.strokeStyle = '111111';
-        ctx.stroke();
-        ctx.closePath();
-
-        // Draw front wheel
-        ctx.translate(cfg.cgToRearAxle + cfg.cgToFrontAxle, 0);
-        ctx.rotate(this.steerAngle);
-        ctx.beginPath();
-        ctx.rect(
-            -cfg.wheelRadius, -cfg.wheelWidth / 2.0,
-            cfg.wheelRadius * 2, cfg.wheelWidth
-            );
-        ctx.fillStyle = '#444444';
-        ctx.fill();
-        ctx.lineWidth = 0.05;
-        ctx.strokeStyle = '111111';
-        ctx.stroke();
-        ctx.closePath();
-
-        ctx.restore();
+        this.body.position.set(this.position.x, this.position.y, 0);
+        this.body.setRotationFromAxisAngle(new THREE.Vector3(0, 0, 1), this.heading);
     };
 }
 
@@ -367,14 +302,11 @@ class CarConfig {
     gravity: number;  // m/s^2
     mass: number;  // kg
     inertiaScale: number;  // Multiply by mass for inertia
-    halfWidth: number; // Centre to side of chassis (metres)
     cgToFront: number; // Centre of gravity to front of chassis (metres)
     cgToRear: number;   // Centre of gravity to rear of chassis
     cgToFrontAxle: number;  // Centre gravity to front axle
     cgToRearAxle: number;  // Centre gravity to rear axle
     cgHeight: number;  // Centre gravity height
-    wheelRadius: number;  // Includes tire (also represents height of axle)
-    wheelWidth: number;  // Used for render only
     tireGrip: number;  // How much grip tires have
     lockGrip: number;  // % of grip available when wheel is locked
     engineForce: number;
@@ -394,14 +326,12 @@ class CarConfig {
         this.gravity = opts.gravity || 9.81;  // m/s^2
         this.mass = opts.mass || 1200.0;  // kg
         this.inertiaScale = opts.inertiaScale || 1.0;  // Multiply by mass for inertia
-        this.halfWidth = opts.halfWidth || 0.8; // Centre to side of chassis (metres)
         this.cgToFront = opts.cgToFront || 2.0; // Centre of gravity to front of chassis (metres)
         this.cgToRear = opts.cgToRear || 2.0;   // Centre of gravity to rear of chassis
         this.cgToFrontAxle = opts.cgToFrontAxle || 1.25;  // Centre gravity to front axle
         this.cgToRearAxle = opts.cgToRearAxle || 1.25;  // Centre gravity to rear axle
         this.cgHeight = opts.cgHeight || 0.55;  // Centre gravity height
-        this.wheelRadius = opts.wheelRadius || 0.3;  // Includes tire (also represents height of axle)
-        this.wheelWidth = opts.wheelWidth || 0.2;  // Used for render only
+
         this.tireGrip = opts.tireGrip || 2.0;  // How much grip tires have
 
         // % of grip available when wheel is locked

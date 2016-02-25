@@ -32,6 +32,7 @@
     <TypeScriptCompile Include="GMath.ts" />
     <TypeScriptCompile Include="InputState.ts" />
     <TypeScriptCompile Include="Stats.ts" />
+    <TypeScriptCompile Include="Track.ts" />
     <TypeScriptCompile Include="typings\CarSimulator.d.ts" />
     <TypeScriptCompile Include="typings\jquery\jquery.d.ts" />
     <TypeScriptCompile Include="typings\threejs\three.d.ts" />
@@ -42,6 +43,9 @@
     <Content Include=".gitignore" />
     <Content Include="assets\cars\f1\f1.json" />
     <Content Include="assets\cars\drifter\drifter.json" />
+    <Content Include="assets\tracks\montreal\montreal.dae" />
+    <Content Include="assets\tracks\montreal\montreal.json" />
+    <Content Include="assets\cars\drifter\drifter.dae" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>

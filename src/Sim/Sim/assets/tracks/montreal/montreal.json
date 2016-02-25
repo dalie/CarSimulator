@@ -1,0 +1,19 @@
+﻿{
+  "id": "montreal",
+  "name": "Circuit Gilles Villeneuve, Montreal, QC",
+  "image": "thumbnail.jpg",
+  "model": "montreal/montreal.dae",
+  "config": {
+    "startingPosition": {
+      "x": 39,
+      "y": 1450,
+      "orientation": 90
+    },
+    "finishLine": {
+      "width": 40,
+      "x": 43,
+      "y": 1629,
+      "orientation": 90
+    }
+  }
+}

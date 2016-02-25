@@ -96,10 +96,7 @@ class Car {
         });
     }
 
-    public setConfig(config?: CarConfig): void {
-        if (config) {
-            this.config.copy(config);
-        }
+    public setConfig(): void {
         // Re-calculate these
         this.inertia = this.config.mass * this.config.inertiaScale;
         this.wheelBase = this.config.cgToFrontAxle + this.config.cgToRearAxle;
@@ -239,9 +236,9 @@ class Car {
         } else {
             //  No steer input - move toward centre (0)
             if (this.steer > 0) {
-                steer = Math.max(this.steer - dt * 1.0, 0);
+                steer = Math.max(this.steer - dt * 3.0, 0);
             } else if (this.steer < 0) {
-                steer = Math.min(this.steer + dt * 1.0, 0);
+                steer = Math.min(this.steer + dt * 3.0, 0);
             }
         }
 
@@ -335,7 +332,7 @@ class CarConfig {
         this.tireGrip = opts.tireGrip || 2.0;  // How much grip tires have
 
         // % of grip available when wheel is locked
-        this.lockGrip = (typeof opts.lockGrip === 'number') ? GMath.clamp(opts.lockGrip, 0.01, 1.0) : 0.7;
+        this.lockGrip = opts.lockGrip || 0.7;
         this.engineForce = opts.engineForce || 8000.0;
         this.brakeForce = opts.brakeForce || 12000.0;
         this.eBrakeForce = opts.eBrakeForce || this.brakeForce / 2.5;
